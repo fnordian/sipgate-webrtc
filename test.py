@@ -15,7 +15,7 @@ client_secret = os.environ['CLIENT_SECRET']
 config = {
     'client_id': client_id,
     'client_secret': client_secret,
-    'api_base_uri': 'https://api.dev.sipgate.com',
+    'api_base_uri': 'https://api.sipgate.com',
     'check_ssl': False,
     'access_token': None,
     'listen_host': '0.0.0.0'
