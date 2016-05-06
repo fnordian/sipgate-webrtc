@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        button.active {
+            background-color: lime;
+        }
+    </style>
+</head>
+<body>
+
+<input type="text" id="numberinput" value="491637777972">
+
+<audio id="webrtc_audio" autoplay="autoplay"></audio>
+<button id="callHandler">Start Call</button>
+
+<script src="/static/node_modules/jssip/dist/jssip.min.js"></script>
+<script>
+    var session;
+    var configuration = {
+        'ws_servers': 'wss://proxy.dev.sipgate.de:443',
+        'uri': 'sip:{{username}}@sipgate.de',
+        'password': '{{password}}'
+    };
+
+    var userAgent = new JsSIP.UA(configuration);
+    userAgent.start();
+
+    var audio = document.getElementById('webrtc_audio');
+
+    var eventHandlers = {
+        'progress': function (e) {
+            // console.log('call is in progress');
+        },
+        'failed': function (e) {
+            // console.log('call failed with cause: ' + e.data.cause);
+        },
+        'confirmed': function (e) {
+            // console.log('call confirmed');
+        },
+        'addstream': function (e) {
+            console.log('remote stream added');
+            var stream = e.stream;
+            JsSIP.rtcninja.attachMediaStream(audio, stream);
+        },
+        'ended': function (e) {
+            console.log('call ended with cause: ');
+            console.log(e);
+        }
+    };
+
+    var options = {
+        eventHandlers: eventHandlers,
+        mediaConstraints: {'audio': true, 'video': false}
+    };
+
+    function getNumberFromForm() {
+	    return document.querySelector("#numberinput").value;
+    }
+
+    document.querySelector('#callHandler').addEventListener('click', function(ev) {
+        if(!this.classList.contains('active')) {
+            this.classList.add('active');
+            this.innerText = 'End Call';
+            session = userAgent.call('sip:+' + getNumberFromForm() + '@sipgate.de', options);
+            return;
+        }
+
+        this.innerText = 'Start Call';
+        this.classList.remove('active');
+        userAgent.stop();
+    });
+</script>
+</body>
+</html>
