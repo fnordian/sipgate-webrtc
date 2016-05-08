@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<input type="text" id="numberinput" value="491637777972">
+<input type="text" id="numberinput" value="" >
 
 <audio id="webrtc_audio" autoplay="autoplay"></audio>
 <button id="callHandler">Start Call</button>
@@ -64,7 +64,7 @@
         if(!this.classList.contains('active')) {
             this.classList.add('active');
             this.innerText = 'End Call';
-            session = userAgent.call('sip:+' + getNumberFromForm() + '@sipgate.de', options);
+            session = userAgent.call('sip:' + getNumberFromForm() + '@sipgate.de', options);
             return;
         }
 
