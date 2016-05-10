@@ -1,7 +1,7 @@
 sipgate webrtc
 ==============
 
-Small demo show the capabilities of sipgate's rest-api, oauth2 and webrtc
+Small demo to show the capabilities of sipgate's rest-api, oauth2 and webrtc
 
 Getting started
 ===============
