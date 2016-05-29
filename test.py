@@ -1,13 +1,25 @@
 from flask import Flask, redirect, request, url_for, jsonify, make_response, render_template
+from flask.ext.assets import Environment, Bundle
+from webassets.filter import register_filter
+from jinja2 import Environment as Jinja2Environment
+from webassets import Environment as AssetsEnvironment
+from webassets.ext.jinja2 import AssetsExtension
 import requests
 import urllib.parse
 import os
 from pprint import pprint
 
+from jsx_assets import ReactFilter
 from reverse_proxied import ReverseProxied
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
+assets = Environment()
+assets.init_app(app)
+register_filter(ReactFilter)
+assets_env = AssetsEnvironment('./static/js', '/media')
+jinja2_env = Jinja2Environment(extensions=[AssetsExtension])
+jinja2_env.assets_environment = assets_env
 
 client_id = os.environ['CLIENT_ID']
 client_secret = os.environ['CLIENT_SECRET']
@@ -117,7 +129,8 @@ def delete_authcookie():
     response = make_response("logged out")
     response.set_cookie('access_token', "")
     return response
-    
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")

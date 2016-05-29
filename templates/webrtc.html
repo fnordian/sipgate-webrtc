@@ -1,80 +1,128 @@
-<!doctype html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Document</title>
-    <style>
-        button.active {
-            background-color: lime;
-        }
-    </style>
+    <title>test</title>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js"></script>
+
+    <script src="static/node_modules/requirejs/require.js"></script>
+
+    <script type="application/javascript">
+        requirejs.config({
+            baseUrl: 'static/node_modules',
+            paths: {
+                jssip: "jssip/dist/jssip",
+                react: "react/dist/react-with-addons",
+                reactdom: "react-dom/dist/react-dom",
+                {% assets filters='react', output='static/js/jsx-transformed.js', 'js/ui.jsx'%}
+                    ui: "{{ ASSET_URL }}"
+                {% endassets %}
+            }
+        });
+
+
+        requirejs(['ui', 'reactdom', 'jssip'], function (ui, reactdom, jssip) {
+            var dialer = reactdom.render(ui, window.document.getElementById("container"));
+            var configuration = {
+                'ws_servers': 'wss://tls01.sipgate.de:443',
+                'uri': 'sip:{{username}}@sipgate.de',
+                'password': '{{password}}'
+            };
+            //jssip.debug.enable('*');
+
+            var userAgent = new jssip.UA(configuration);
+            var session;
+            userAgent.start();
+
+            var audio = document.getElementById('webrtc_audio');
+
+            userAgent.on('newRTCSession', function (data) {
+                        var newSession = data.session;
+
+
+
+                        if (newSession.direction === "incoming") {
+                            console.log('incoming!!!!');
+
+                            if (session === undefined) {
+                                dialer.setDialState("incoming");
+                                session = newSession;
+
+                                var endEvents = ["ended", "failed", "removestream" ]
+                                for (var i in endEvents) {
+                                    newSession.on(endEvents[i], function () {
+                                        dialer.setDialState("idle");
+                                        session = undefined;
+                                    });
+                                }
+
+                                newSession.on("confirmed", function() {
+                                    dialer.setDialState("confirmed");
+                                });
+
+                            } else {
+                                newSession.terminate();
+                            }
+                        }
+                    }
+            );
+
+
+            var eventHandlers = {
+                'progress': function (e) {
+                    dialer.setDialState("progress");
+                    console.log('call is in progress');
+                },
+                'failed': function (e) {
+                    dialer.setDialState("idle");
+                    console.log('call failed with cause: ' + e);
+                    session = undefined;
+                },
+                'confirmed': function (e) {
+                    dialer.setDialState("confirmed");
+                    console.log('call confirmed');
+                },
+                'addstream': function (e) {
+                    console.log('remote stream added');
+                    var stream = e.stream;
+                    jssip.rtcninja.attachMediaStream(audio, stream);
+                },
+                'ended': function (e) {
+                    dialer.setDialState("idle");
+                    console.log('call ended with cause: ');
+                    console.log(e);
+                    session = undefined;
+                }
+            };
+
+            var options = {
+                eventHandlers: eventHandlers,
+                mediaConstraints: {'audio': true, 'video': false}
+            };
+
+            dialer.setHandler("onDial", function (number) {
+                dialer.setDialState("trying");
+                session = userAgent.call('sip:' + number + '@sipgate.de', options);
+            });
+            dialer.setHandler("onHangup", function () {
+                userAgent.terminateSessions();
+            });
+            dialer.setHandler("onAccept", function () {
+                session.answer();
+            });
+            dialer.setHandler("onReject", function () {
+                session.terminate();
+            });
+
+        });
+
+    </script>
+
+
 </head>
 <body>
-
-<input type="text" id="numberinput" value="" >
-
-<audio id="webrtc_audio" autoplay="autoplay"></audio>
-<button id="callHandler">Start Call</button>
-
-<script src="static/node_modules/jssip/dist/jssip.min.js"></script>
-<script>
-    var session;
-    var configuration = {
-        'ws_servers': 'wss://tls01.sipgate.de:443',
-        'uri': 'sip:{{username}}@sipgate.de',
-        'password': '{{password}}'
-    };
-
-    var userAgent = new JsSIP.UA(configuration);
-    userAgent.start();
-
-    var audio = document.getElementById('webrtc_audio');
-
-    var eventHandlers = {
-        'progress': function (e) {
-            // console.log('call is in progress');
-        },
-        'failed': function (e) {
-            // console.log('call failed with cause: ' + e.data.cause);
-        },
-        'confirmed': function (e) {
-            // console.log('call confirmed');
-        },
-        'addstream': function (e) {
-            console.log('remote stream added');
-            var stream = e.stream;
-            JsSIP.rtcninja.attachMediaStream(audio, stream);
-        },
-        'ended': function (e) {
-            console.log('call ended with cause: ');
-            console.log(e);
-        }
-    };
-
-    var options = {
-        eventHandlers: eventHandlers,
-        mediaConstraints: {'audio': true, 'video': false}
-    };
-
-    function getNumberFromForm() {
-	    return document.querySelector("#numberinput").value;
-    }
-
-    document.querySelector('#callHandler').addEventListener('click', function(ev) {
-        if(!this.classList.contains('active')) {
-            this.classList.add('active');
-            this.innerText = 'End Call';
-            session = userAgent.call('sip:' + getNumberFromForm() + '@sipgate.de', options);
-            return;
-        }
-
-        this.innerText = 'Start Call';
-        this.classList.remove('active');
-        userAgent.stop();
-    });
-</script>
-
-<a href="https://github.com/fnordian/sipgate-webrtc"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
-
+<div id="container"></div>
 </body>
 </html>
