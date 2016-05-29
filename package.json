@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "dependencies": {
     "jssip": "^1.0.0",
-    "requirejs": "~2.2.0"
+    "requirejs": "~2.2.0",
+    "react": "~15.0.2",
+    "react-dom": "~15.0.2"
   }
 }
