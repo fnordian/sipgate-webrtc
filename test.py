@@ -115,8 +115,6 @@ def show_webrtc_client():
 
     credentials = read_device_settings(token)
 
-    pprint(credentials)
-
     username=credentials.get("credentials").get("username")
     password=credentials.get("credentials").get("password")
 
