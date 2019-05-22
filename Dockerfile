@@ -1,4 +1,4 @@
-FROM fedora:latest
+FROM fedora:30
 
 EXPOSE 5000
 
