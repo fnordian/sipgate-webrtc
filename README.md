@@ -8,7 +8,7 @@ Getting started
 
 ## OAuth2 client setup
 
-Get oauth2 client_id and client_secret from sipgate: https://api.sipgate.com/developer
+Get oauth2 client_id and client_secret from sipgate: https://console.sipgate.com/
 
 ## Run using docker
 
