@@ -10,6 +10,11 @@ Getting started
 
 Get oauth2 client_id and client_secret from sipgate: https://console.sipgate.com/
 
+For local testing add
+
+ * Redirect URI: http://127.0.0.1:5000/callback
+ * Web Origins: http://127.0.0.1:5000
+
 ## Run using docker
 
     sudo docker build -t sipgate-webrtc https://github.com/fnordian/sipgate-webrtc.git
